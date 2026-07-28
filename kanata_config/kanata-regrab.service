@@ -1,0 +1,12 @@
+[Unit]
+Description=Restart kanata to re-grab a (re)connected keyboard
+# Started on demand by udev (42-kanata-regrab.rules) via SYSTEMD_WANTS.
+# Don't fire during shutdown.
+Conflicts=shutdown.target
+Before=shutdown.target
+
+[Service]
+Type=oneshot
+# Let the device (and any sibling devices from the same reconnect burst) settle.
+ExecStartPre=/bin/sleep 2
+ExecStart=/bin/systemctl restart kanata.service

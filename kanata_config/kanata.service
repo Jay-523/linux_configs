@@ -1,0 +1,14 @@
+[Unit]
+Description=kanata keyboard remapper (Karabiner-style config-as-code)
+Documentation=https://github.com/jtroo/kanata
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStartPre=/sbin/modprobe uinput
+ExecStart=/home/dragonshree/.local/bin/kanata --cfg /home/dragonshree/jay/configuring_linux/kanata_config/kanata.kbd
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

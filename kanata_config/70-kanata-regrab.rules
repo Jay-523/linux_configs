@@ -1,0 +1,14 @@
+# Auto-restart kanata when a keyboard (re)connects, so it re-grabs the device.
+# Fixes: MX KEYS B Bluetooth reconnect / suspend-resume dropping the grab
+# (RUNBOOK Incident 4 / requirements OPS-3).
+#
+# CRITICAL: ATTRS{name}!="kanata" excludes kanata's OWN virtual keyboard —
+# without it, kanata restarting would re-trigger this rule in an infinite loop.
+#
+# CRITICAL: the filename MUST sort after 60 — ID_INPUT_KEYBOARD is set by the
+# input_id builtin in 60-input-id.rules. At priority 42 this rule evaluated
+# before that property existed and silently never matched (RUNBOOK Incident 5).
+#
+# Uses SYSTEMD_WANTS -> oneshot kanata-regrab.service (not RUN+=systemctl):
+# the burst of add-events from one reconnect coalesces into a single activation.
+ACTION=="add", SUBSYSTEM=="input", ENV{ID_INPUT_KEYBOARD}=="1", ATTRS{name}!="kanata", TAG+="systemd", ENV{SYSTEMD_WANTS}+="kanata-regrab.service"

@@ -1,0 +1,3 @@
+# Let the `input` group read/write /dev/uinput so kanata can run WITHOUT sudo.
+# (Only needed for non-root/manual runs; the systemd service below runs as root.)
+KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"

@@ -1,0 +1,104 @@
+;; ============================================================================
+;;  kanata.kbd  —  Jay's Karabiner remaps, translated for Linux (Wayland)
+;;  Version-controlled config-as-code (was: github.com/Jay-523/karabiner_scripts)
+;;
+;;  Validate:  kanata --cfg kanata.kbd --check
+;;  Reload:    krestart      (alias for: sudo systemctl restart kanata.service)
+;;
+;;  MODIFIER SCHEME (mirrors macOS):
+;;    Ctrl (hold)      -> `cnav` layer: Ctrl+hjkl = arrows, +Shift selects,
+;;                        +Super = line/doc motion.  Tap Ctrl = Escape.
+;;    Left Alt (hold)  -> `cmd` layer = the macOS Command key. Cmd+<letter>
+;;                        emits Ctrl+<letter> (Cmd+C/V/A/L/T/W/Z/...), Cmd+arrows
+;;                        = line/doc, Cmd+[ ] = browser back/fwd, Cmd+Tab = Alt+Tab.
+;;    Right Alt        -> stays a real Alt (Alt+Tab cycling, menus). Right Alt +
+;;                        hjkl = word motion (the old Option+hjkl).
+;;    Caps = Hyper. Right Shift tap = right-click. Esc = left-click.
+;;
+;;  WHY the layers never press a "real" modifier for remapped nav keys:
+;;  a tap-hold/held modifier that is then stripped around a key "flashes" ~1ms
+;;  on Wayland and the compositor misreads it (e.g. Ctrl+J read as Ctrl+Down).
+;;  So Ctrl's hold is a PURE layer switch: hjkl emit BARE arrows (zero Ctrl
+;;  events -> cannot leak); every other key is enumerated as explicit Ctrl+<key>.
+;; ============================================================================
+
+(defcfg
+  process-unmapped-keys yes)
+
+;; ---- physical keyboard (full grab so we can add Ctrl in the cnav layer) ----
+(defsrc
+  esc  f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
+  grv  1 2 3 4 5 6 7 8 9 0 - = bspc
+  tab  q w e r t y u i o p [ ] \
+  caps a s d f g h j k l ; ' ret
+  lsft z x c v b n m , . / rsft
+  lctl lmet lalt spc ralt rctl
+  ins del home end pgup pgdn
+  up down left right)
+
+(defalias
+  ;; Caps Lock -> Hyper (Ctrl+Shift+Alt+Super held together)
+  hyp (multi lctl lsft lalt lmet)
+  ;; Control: tap = Escape, hold = enter cnav (NO real lctl is pressed)
+  ec  (tap-hold-press 200 200 esc (layer-while-held cnav))
+  ;; Right Shift: tap = right-click, hold = Shift
+  rsm (tap-hold-press 200 200 mrgt rsft)
+  ;; Left Alt = macOS Command key -> enter the `cmd` layer (no real Alt emitted)
+  cmd (layer-while-held cmd)
+
+  ;; cnav nav actions. hjkl default to bare arrows; +Shift selects (Shift
+  ;; passes through and stacks). With Super also held (fork): h/l -> line
+  ;; start/end (Home/End), k/j -> document start/end (Ctrl+Home / Ctrl+End).
+  ch (fork left (unmod (lmet rmet) home) (lmet rmet))
+  cl (fork rght (unmod (lmet rmet) end)  (lmet rmet))
+  ck (fork up   (multi lctl (unmod (lmet rmet) home)) (lmet rmet))
+  cj (fork down (multi lctl (unmod (lmet rmet) end))  (lmet rmet))
+  cesc esc      ;; Ctrl+Space -> Escape
+  cdel del)     ;; Ctrl+D     -> forward delete
+
+;; ---- base layer: identity typing + the special remaps ----------------------
+(deflayer base
+  mlft f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
+  grv  1 2 3 4 5 6 7 8 9 0 - = bspc
+  tab  q w e r t y u i o p [ ] \
+  @hyp a s d f g h j k l ; ' ret
+  lsft z x c v b n m , . / @rsm
+  @ec  lmet @cmd spc ralt @ec
+  ins del home end pgup pgdn
+  up down left right)
+
+;; ---- cnav: active only while Control is held. hjkl = clean arrows, every
+;;      other key = real Ctrl+<key> so all your Ctrl shortcuts keep working ----
+(deflayer cnav
+  _     C-f1 C-f2 C-f3 C-f4 C-f5 C-f6 C-f7 C-f8 C-f9 C-f10 C-f11 C-f12
+  C-grv C-1 C-2 C-3 C-4 C-5 C-6 C-7 C-8 C-9 C-0 C-- C-= C-bspc
+  C-tab C-q C-w C-e C-r C-t C-y C-u C-i C-o C-p C-[ C-] C-\
+  _     C-a C-s @cdel C-f C-g @ch @cj @ck @cl C-; C-' C-ret
+  _     C-z C-x C-c C-v C-b C-n C-m C-, C-. C-/ _
+  _     _    _    @cesc _    _
+  C-ins C-del C-home C-end C-pgup C-pgdn
+  C-up C-down C-left C-right)
+
+;; ---- cmd: active while Left Alt (= macOS Command) is held. Cmd+<key> emits
+;;      the Linux Ctrl-shortcut equivalent; Cmd+arrows/[ ]/Tab = Mac nav. -------
+(deflayer cmd
+  _     _   _   _   _   _   _   _   _   _   _    _    _
+  _     C-1 C-2 C-3 C-4 C-5 C-6 C-7 C-8 C-9 C-0 C-- C-= C-bspc
+  A-tab C-q C-w C-e C-r C-t C-y C-u C-i C-o C-p A-left A-right C-\
+  _     C-a C-s C-d C-f C-g C-h C-j C-k C-l C-; C-' C-ret
+  _     C-z C-x C-c C-v C-b C-n C-m C-, C-. C-/ _
+  _     _    _    _    _    _
+  _     C-del _   _    _    _
+  C-home C-end home end)
+
+;; ---- Right Alt + hjkl = word / line motion (the old Option+hjkl) ------------
+(defoverrides
+  (ralt d)       (lctl del)          ;; ⌥D -> delete word forward
+  (ralt h)       (lctl left)         ;; ⌥+hjkl -> word motion
+  (ralt l)       (lctl rght)
+  (ralt j)       (down)
+  (ralt k)       (up)
+  (ralt lsft h)  (lctl lsft left)    ;; ⌥+Shift+h/l -> word selection
+  (ralt lsft l)  (lctl lsft rght)
+  (ralt lsft j)  (lsft down)         ;; ⌥+Shift+j/k -> line selection (KB-19)
+  (ralt lsft k)  (lsft up))
