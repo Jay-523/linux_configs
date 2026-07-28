@@ -69,6 +69,13 @@ All native GNOME/gsettings — no extra app. Kanata passes these chords through 
   Note: Ctrl+**LeftAlt**+Enter can never work — left Alt is kanata's cmd layer and emits no real Alt.
 - **Accepted trade-off:** GNOME swallows Ctrl+9/Ctrl+0 globally, so browsers lose Ctrl+9 (last tab) and Ctrl+0 (reset zoom) — same trade-off as Rectangle on macOS.
 
+## Git / GitHub
+
+- **This folder is the repo:** pushed to https://github.com/Jay-523/linux_configs (branch `main`). (2026-07-28)
+- **git identity** (global): `git config --global user.name "Jay"` / `git config --global user.email "jay.hdfs@gmail.com"`
+- **GitHub CLI:** `gh` 2.67.0 at `~/.local/bin/gh`. Authenticated to github.com as **Jay-523** (active) via browser device flow — `gh auth login` → GitHub.com → HTTPS. A second account `dhanwantdhani` is also logged in but inactive; switch with `gh auth switch`.
+- **Git auth:** HTTPS with gh as the credential helper (`gh auth setup-git`) — no SSH keys on this machine. Remotes should use `https://github.com/...` URLs, not `git@github.com:...`.
+
 ## Terminal
 
 - **Ghostty 1.3.1** (`/usr/bin/ghostty`, installed from the `.deb` in this folder)
